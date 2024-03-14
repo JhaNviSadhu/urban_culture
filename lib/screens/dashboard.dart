@@ -32,19 +32,24 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        backgroundColor: Colors.white.withOpacity(0),
-        title: Text(
-          _selectedTab == 0 ? 'Daily Skincare' : 'Streaks',
-          style: UrbanCultureTextStyle.subtitleW700(
-            color: UrbanCultureColors.urbanCulturTextColors.textTitleColor,
-          ),
-        ),
-      ),
+      appBar: _buildAppbar(),
       body: Center(child: _pages[_selectedTab]),
       bottomNavigationBar: _buildBottomNavigationBar(),
+    );
+  }
+
+  AppBar _buildAppbar() {
+    return AppBar(
+      elevation: 0,
+      centerTitle: true,
+      scrolledUnderElevation: 0,
+      backgroundColor: Colors.white.withOpacity(0),
+      title: Text(
+        _selectedTab == 0 ? 'Daily Skincare' : 'Streaks',
+        style: UrbanCultureTextStyle.subtitleW700(
+          color: UrbanCultureColors.urbanCulturTextColors.textTitleColor,
+        ),
+      ),
     );
   }
 

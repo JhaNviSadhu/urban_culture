@@ -92,17 +92,22 @@ class _RoutineScreenState extends State<RoutineScreen> {
                 ],
               ),
               Spacer(),
-              Image.asset(
-                ImgConstatnts.icCamera,
-                width: 27,
-                height: 27,
-              ),
-              4.width,
-              Text(
-                "${data['time']}",
-                style: UrbanCultureTextStyle.subheadW400(
-                    color: UrbanCultureColors.primaryColor),
-              ),
+              if (data['isSelected'])
+                Row(
+                  children: [
+                    Image.asset(
+                      ImgConstatnts.icCamera,
+                      width: 27,
+                      height: 27,
+                    ),
+                    4.width,
+                    Text(
+                      "${data['time']}",
+                      style: UrbanCultureTextStyle.subheadW400(
+                          color: UrbanCultureColors.primaryColor),
+                    ),
+                  ],
+                )
             ],
           ),
         ),
