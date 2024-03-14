@@ -19,7 +19,6 @@ class UrbanCultureColors {
         },
       );
 
-  // static Color get alertRed => Colors.red;
   static Color get scaffoldColor => const Color(0xffFCF7FA);
   static Color get greenColor => const Color(0xff088759);
   static Color get containerColor => const Color(0xffF2E8EB);
