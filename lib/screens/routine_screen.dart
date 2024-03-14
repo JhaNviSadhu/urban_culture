@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:urban_culture/utils/urban_culture_colors.dart';
 import 'package:urban_culture/utils/urban_culture_common.dart';
@@ -13,6 +15,7 @@ class RoutineScreen extends StatefulWidget {
 
 class _RoutineScreenState extends State<RoutineScreen> {
   bool isSelected = false;
+  File? _image;
 
   @override
   Widget build(BuildContext context) {
@@ -28,11 +31,29 @@ class _RoutineScreenState extends State<RoutineScreen> {
   //card view design
   Widget _buildCard({index, data}) {
     return GestureDetector(
-      onTap: () {
-        setState(() {
-          data['isSelected'] = !data['isSelected'];
-        });
-      },
+      onTap: _image == null
+          ? () async {
+              if (index == 0
+                  ? true
+                  : dailySkincareStep[index - 1]['isSelected']) {
+                _image = await getImage().then((value) {
+                  print(value);
+                  if (value != null) {
+                    setState(() {
+                      data['isSelected'] = true;
+                    });
+                  }
+
+                  return value;
+                });
+              } else {
+                showSnackbar(MessageType.warning,
+                    context: context,
+                    message: "Please do your skincare step by step");
+              }
+              _image = null;
+            }
+          : () {},
       child: Container(
         color: Colors.transparent,
         child: Padding(

@@ -20,6 +20,9 @@ dependencies:
   google_fonts: 6.1.0
   # for chart
   fl_chart: ^0.66.2
+  # for image
+  image_picker: ^1.0.7
+  image_cropper: ^5.0.1
 
 dev_dependencies:
   flutter_test:
