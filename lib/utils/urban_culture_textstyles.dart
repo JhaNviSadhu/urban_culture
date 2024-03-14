@@ -48,6 +48,13 @@ class UrbanCultureTextStyle {
         height: 1,
         color: color,
       );
+  static TextStyle subtitleW700({Color? color, FontWeight? fontWeight}) =>
+      GoogleFonts.epilogue(
+        fontSize: 18,
+        fontWeight: FontWeight.w700,
+        height: 1,
+        color: color,
+      );
 
   static TextStyle body({Color? color, FontWeight? fontWeight}) =>
       GoogleFonts.epilogue(
