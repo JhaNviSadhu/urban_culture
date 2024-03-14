@@ -68,10 +68,10 @@ class UrbanCultureTextStyle {
         color: color,
       );
 
-  static TextStyle subhead({Color? color, FontWeight? fontWeight}) =>
+  static TextStyle subheadW400({Color? color, FontWeight? fontWeight}) =>
       GoogleFonts.epilogue(
-        fontSize: 15,
-        fontWeight: FontWeight.w500,
+        fontSize: 14,
+        fontWeight: FontWeight.w400,
         color: color,
       );
 
