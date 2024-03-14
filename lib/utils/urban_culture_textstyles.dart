@@ -21,6 +21,13 @@ class UrbanCultureTextStyle {
         color: color,
       );
 
+  static TextStyle h3W700({Color? color, FontWeight? fontWeight}) =>
+      GoogleFonts.epilogue(
+        fontSize: 32,
+        fontWeight: FontWeight.w700,
+        color: color,
+      );
+
   static TextStyle h4({Color? color, FontWeight? fontWeight}) =>
       GoogleFonts.epilogue(
         fontSize: 24,
@@ -28,10 +35,24 @@ class UrbanCultureTextStyle {
         color: color,
       );
 
+  static TextStyle h4W700({Color? color, FontWeight? fontWeight}) =>
+      GoogleFonts.epilogue(
+        fontSize: 24,
+        fontWeight: FontWeight.w700,
+        color: color,
+      );
+
   static TextStyle h5({Color? color, FontWeight? fontWeight}) =>
       GoogleFonts.epilogue(
         fontSize: 22,
         fontWeight: FontWeight.w500,
+        color: color,
+      );
+
+  static TextStyle h5W700({Color? color, FontWeight? fontWeight}) =>
+      GoogleFonts.epilogue(
+        fontSize: 22,
+        fontWeight: FontWeight.w700,
         color: color,
       );
 
@@ -68,10 +89,23 @@ class UrbanCultureTextStyle {
         color: color,
       );
 
+  static TextStyle calloutW400({Color? color}) => GoogleFonts.epilogue(
+        fontSize: 16,
+        fontWeight: FontWeight.w400,
+        color: color,
+      );
+
   static TextStyle subheadW400({Color? color, FontWeight? fontWeight}) =>
       GoogleFonts.epilogue(
         fontSize: 14,
         fontWeight: FontWeight.w400,
+        color: color,
+      );
+
+  static TextStyle subheadW700({Color? color, FontWeight? fontWeight}) =>
+      GoogleFonts.epilogue(
+        fontSize: 14,
+        fontWeight: FontWeight.w700,
         color: color,
       );
 
@@ -80,6 +114,14 @@ class UrbanCultureTextStyle {
         fontSize: 13,
         height: 1,
         fontWeight: FontWeight.w500,
+        color: color,
+      );
+
+  static TextStyle footnoteW700({Color? color, FontWeight? fontWeight}) =>
+      GoogleFonts.epilogue(
+        fontSize: 13,
+        height: 1,
+        fontWeight: FontWeight.w700,
         color: color,
       );
 
