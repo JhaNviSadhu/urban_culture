@@ -1,6 +1,9 @@
 import 'dart:io';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:urban_culture/model/model_routine.dart';
 import 'package:urban_culture/utils/urban_culture_colors.dart';
 import 'package:urban_culture/utils/urban_culture_common.dart';
 import 'package:urban_culture/utils/urban_culture_images.dart';
@@ -16,6 +19,18 @@ class RoutineScreen extends StatefulWidget {
 class _RoutineScreenState extends State<RoutineScreen> {
   bool isSelected = false;
   File? _image;
+  var userData;
+  ModelSkinCareRoutines modelSkinCareRoutines = ModelSkinCareRoutines();
+
+  @override
+  void initState() {
+    getUserId();
+    super.initState();
+  }
+
+  getUserId() async {
+    userData = await FirebaseAuth.instance.currentUser;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -36,12 +51,14 @@ class _RoutineScreenState extends State<RoutineScreen> {
               if (index == 0
                   ? true
                   : dailySkincareStep[index - 1]['isSelected']) {
-                _image = await getImage().then((value) {
+                _image = await getImage().then((value) async {
                   print(value);
                   if (value != null) {
                     setState(() {
                       data['isSelected'] = true;
                     });
+
+                    updateData(index);
                   }
 
                   return value;
@@ -134,6 +151,209 @@ class _RoutineScreenState extends State<RoutineScreen> {
         ),
       ),
     );
+  }
+
+  Future getFirebaseData() async {
+    return await FirebaseFirestore.instance
+        .collection('user')
+        .doc("${userData?.uid}")
+        .collection('skincareRoutines')
+        .doc("${getCurrentDate()}")
+        .get();
+  }
+
+  setFirebaseData({data, isupdate = false}) {
+    isupdate
+        ? FirebaseFirestore.instance
+            .collection('user')
+            .doc("${userData?.uid}")
+            .collection('skincareRoutines')
+            .doc("${getCurrentDate()}")
+            .update(data)
+        : FirebaseFirestore.instance
+            .collection('user')
+            .doc("${userData?.uid}")
+            .collection('skincareRoutines')
+            .doc("${getCurrentDate()}")
+            .set(data);
+  }
+
+  updateData(index) async {
+    switch (index) {
+      case 0:
+        getFirebaseData().then((value) {
+          setFirebaseData(
+            data: skincareRoutineResponseModelToJson(
+              ModelSkinCareRoutines(
+                completedSteps: CompletedSteps(
+                  moisturizer: false,
+                  sunscreen: false,
+                  toner: false,
+                  cleanser: true,
+                  lipBalm: false,
+                ),
+                images: Images(
+                  cleanser: '',
+                  lipBalm: '',
+                  moisturizer: '',
+                  sunscreen: '',
+                  toner: '',
+                ),
+                timestamps: Timestamps(
+                  cleanser: Timestamp.fromDate(DateTime.now()),
+                ),
+              ),
+            ),
+          );
+        });
+
+        break;
+      case 1:
+        getFirebaseData().then((snapshot) {
+          var data = snapshot.data();
+          print(data);
+          if (data != null) {
+            modelSkinCareRoutines = ModelSkinCareRoutines.fromJson(data);
+          }
+          setFirebaseData(
+            isupdate: true,
+            data: skincareRoutineResponseModelToJson(
+              ModelSkinCareRoutines(
+                completedSteps: CompletedSteps(
+                  moisturizer: false,
+                  sunscreen: false,
+                  toner: true,
+                  cleanser: modelSkinCareRoutines.completedSteps?.cleanser,
+                  lipBalm: false,
+                ),
+                images: Images(
+                  cleanser: '',
+                  lipBalm: '',
+                  moisturizer: '',
+                  sunscreen: '',
+                  toner: '',
+                ),
+                timestamps: Timestamps(
+                  cleanser: modelSkinCareRoutines.timestamps?.cleanser,
+                  toner: Timestamp.fromDate(DateTime.now()),
+                ),
+              ),
+            ),
+          );
+        });
+        break;
+      case 2:
+        getFirebaseData().then((snapshot) {
+          var data = snapshot.data();
+          print(data);
+          if (data != null) {
+            modelSkinCareRoutines = ModelSkinCareRoutines.fromJson(data);
+          }
+          setFirebaseData(
+            isupdate: true,
+            data: skincareRoutineResponseModelToJson(
+              ModelSkinCareRoutines(
+                completedSteps: CompletedSteps(
+                  moisturizer: true,
+                  sunscreen: false,
+                  toner: modelSkinCareRoutines.completedSteps?.toner,
+                  cleanser: modelSkinCareRoutines.completedSteps?.cleanser,
+                  lipBalm: false,
+                ),
+                images: Images(
+                  cleanser: '',
+                  lipBalm: '',
+                  moisturizer: '',
+                  sunscreen: '',
+                  toner: '',
+                ),
+                timestamps: Timestamps(
+                  moisturizer: Timestamp.fromDate(DateTime.now()),
+                  cleanser: modelSkinCareRoutines.timestamps?.cleanser,
+                  toner: modelSkinCareRoutines.timestamps?.toner,
+                ),
+              ),
+            ),
+          );
+        });
+        break;
+      case 3:
+        getFirebaseData().then((snapshot) {
+          var data = snapshot.data();
+          print(data);
+          if (data != null) {
+            modelSkinCareRoutines = ModelSkinCareRoutines.fromJson(data);
+          }
+          setFirebaseData(
+            isupdate: true,
+            data: skincareRoutineResponseModelToJson(
+              ModelSkinCareRoutines(
+                completedSteps: CompletedSteps(
+                  moisturizer:
+                      modelSkinCareRoutines.completedSteps?.moisturizer,
+                  sunscreen: true,
+                  toner: modelSkinCareRoutines.completedSteps?.toner,
+                  cleanser: modelSkinCareRoutines.completedSteps?.cleanser,
+                  lipBalm: false,
+                ),
+                images: Images(
+                  cleanser: '',
+                  lipBalm: '',
+                  moisturizer: '',
+                  sunscreen: '',
+                  toner: '',
+                ),
+                timestamps: Timestamps(
+                  moisturizer: modelSkinCareRoutines.timestamps?.moisturizer,
+                  sunscreen: Timestamp.fromDate(DateTime.now()),
+                  cleanser: modelSkinCareRoutines.timestamps?.cleanser,
+                  toner: modelSkinCareRoutines.timestamps?.toner,
+                ),
+              ),
+            ),
+          );
+        });
+        break;
+      case 4:
+        getFirebaseData().then((snapshot) {
+          var data = snapshot.data();
+          print(data);
+          if (data != null) {
+            modelSkinCareRoutines = ModelSkinCareRoutines.fromJson(data);
+          }
+          setFirebaseData(
+            isupdate: true,
+            data: skincareRoutineResponseModelToJson(
+              ModelSkinCareRoutines(
+                completedSteps: CompletedSteps(
+                  moisturizer:
+                      modelSkinCareRoutines.completedSteps?.moisturizer,
+                  sunscreen: modelSkinCareRoutines.completedSteps?.sunscreen,
+                  toner: modelSkinCareRoutines.completedSteps?.toner,
+                  cleanser: modelSkinCareRoutines.completedSteps?.cleanser,
+                  lipBalm: true,
+                ),
+                images: Images(
+                  cleanser: '',
+                  lipBalm: '',
+                  moisturizer: '',
+                  sunscreen: '',
+                  toner: '',
+                ),
+                timestamps: Timestamps(
+                  moisturizer: modelSkinCareRoutines.timestamps?.moisturizer,
+                  sunscreen: modelSkinCareRoutines.timestamps?.sunscreen,
+                  cleanser: modelSkinCareRoutines.timestamps?.cleanser,
+                  toner: modelSkinCareRoutines.timestamps?.toner,
+                  lipBalm: Timestamp.fromDate(DateTime.now()),
+                ),
+              ),
+            ),
+          );
+        });
+        break;
+      default:
+    }
   }
 }
 

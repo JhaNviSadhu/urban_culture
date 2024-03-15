@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
 import 'package:urban_culture/utils/urban_culture_colors.dart';
 
 extension EmptySizedBox on num {
@@ -79,4 +80,9 @@ showSnackbar(MessageType type, {message, context}) {
     duration: Duration(seconds: 2),
   );
   ScaffoldMessenger.of(context).showSnackBar(snackBar);
+}
+
+getCurrentDate() {
+  var today = DateTime.now();
+  return DateFormat('yyyy-MM-dd').format(today);
 }
