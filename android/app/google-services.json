@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "156942403206",
+    "project_id": "urban-culture-f1ec5",
+    "storage_bucket": "urban-culture-f1ec5.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:156942403206:android:ad9cd3236a12fef5727307",
+        "android_client_info": {
+          "package_name": "com.app.urban_culture"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA0tlHs6UPYdzRmP6GGKAVwVKNyRpY0l8A"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

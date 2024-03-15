@@ -22,6 +22,12 @@
 	<string>????</string>
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
+    <key>NSCameraUsageDescription</key>
+    <string>This lets you do things like take and share photos, record videos and use other special features.</string>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>This lets you include audio with your videos.</string>
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>This lets you do things like select and share photos, videos and use other special features.</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>
