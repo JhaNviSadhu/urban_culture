@@ -1,11 +1,47 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:urban_culture/utils/urban_culture_colors.dart';
 import 'package:urban_culture/utils/urban_culture_common.dart';
 import 'package:urban_culture/utils/urban_culture_textstyles.dart';
 
-class StreakScreen extends StatelessWidget {
+class StreakScreen extends StatefulWidget {
   const StreakScreen({super.key});
+
+  @override
+  State<StreakScreen> createState() => _StreakScreenState();
+}
+
+class _StreakScreenState extends State<StreakScreen> {
+  int currentStreak = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchUserStreak();
+  }
+
+  Future<void> fetchUserStreak() async {
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      String userId = user.uid;
+      DocumentSnapshot userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .get();
+
+      if (userDoc.exists) {
+        Map<String, dynamic> data =
+            userDoc.data() as Map<String, dynamic>? ?? {};
+        int fetchedStreak = data['currentStreak'] ?? 0;
+
+        setState(() {
+          currentStreak = fetchedStreak;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -16,7 +52,7 @@ class StreakScreen extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.only(top: 20, left: 16),
           child: Text(
-            "Today's Goal: 3 streak days",
+            "Today's Goal: ${currentStreak + 1} streak days",
             style: UrbanCultureTextStyle.h5W700(
                 color: UrbanCultureColors.urbanCulturTextColors.textTitleColor),
           ),
@@ -39,7 +75,7 @@ class StreakScreen extends StatelessWidget {
                 ),
                 8.height,
                 Text(
-                  "2",
+                  "$currentStreak",
                   style: UrbanCultureTextStyle.h4W700(
                       color: UrbanCultureColors
                           .urbanCulturTextColors.textTitleColor),
@@ -61,7 +97,7 @@ class StreakScreen extends StatelessWidget {
               ),
               8.height,
               Text(
-                "2",
+                "$currentStreak",
                 style: UrbanCultureTextStyle.h3W700(
                     color: UrbanCultureColors
                         .urbanCulturTextColors.textTitleColor),

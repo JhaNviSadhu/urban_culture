@@ -12,7 +12,7 @@ Future<void> main() async {
   await FirebaseAuth.instance.signInAnonymously();
   var user = await FirebaseAuth.instance.currentUser;
   var uid = user?.uid;
-  await FirebaseFirestore.instance.collection('user').doc(user?.uid).set({});
+  // await FirebaseFirestore.instance.collection('users').doc(user?.uid).set({});
   runApp(const MyApp());
 }
 

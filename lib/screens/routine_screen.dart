@@ -2,7 +2,9 @@ import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:urban_culture/model/model_routine.dart';
 import 'package:urban_culture/utils/urban_culture_colors.dart';
 import 'package:urban_culture/utils/urban_culture_common.dart';
@@ -17,60 +19,69 @@ class RoutineScreen extends StatefulWidget {
 }
 
 class _RoutineScreenState extends State<RoutineScreen> {
+  ModelSkinCareRoutines modelSkinCareRoutines = ModelSkinCareRoutines();
   bool isSelected = false;
   File? _image;
   var userData;
-  ModelSkinCareRoutines modelSkinCareRoutines = ModelSkinCareRoutines();
+  int currentStepIndex = 0;
+  List<bool> stepCompletionStatus = List.filled(5, false); // Assuming 5 steps
+  bool showLoader = false;
 
   @override
   void initState() {
-    getUserId();
+    getUserId().then((_) {
+      getCurrentStepIndex(); // Retrieve the current step index from Firestore
+      fetchSkincareRoutineData(); // Fetch and populate the routine data
+      checkAndResetStepsIfNeeded(); // Check if the steps need to be reset for a new day
+    });
     super.initState();
-  }
-
-  getUserId() async {
-    userData = await FirebaseAuth.instance.currentUser;
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        body: ListView.builder(
-      itemCount: dailySkincareStep.length,
-      itemBuilder: (context, index) {
-        return _buildCard(index: index, data: dailySkincareStep[index]);
-      },
+        body: Stack(
+      alignment: Alignment.center,
+      children: [
+        ListView.builder(
+          itemCount: dailySkincareStep.length,
+          itemBuilder: (context, index) {
+            return _buildCard(index: index, data: dailySkincareStep[index]);
+          },
+        ),
+        if (showLoader)
+          Positioned(
+            bottom: 20,
+            child: Container(
+              decoration: BoxDecoration(
+                color: UrbanCultureColors.containerColor,
+                borderRadius: BorderRadius.circular(30),
+              ),
+              child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+                child: Text(
+                  "Please wait data uploading to firebase...",
+                  style: UrbanCultureTextStyle.subheadW700(
+                      color: UrbanCultureColors.primaryColor),
+                ),
+              ),
+            ),
+          ),
+      ],
     ));
   }
 
   //card view design
   Widget _buildCard({index, data}) {
     return GestureDetector(
-      onTap: _image == null
-          ? () async {
-              if (index == 0
-                  ? true
-                  : dailySkincareStep[index - 1]['isSelected']) {
-                _image = await getImage().then((value) async {
-                  print(value);
-                  if (value != null) {
-                    setState(() {
-                      data['isSelected'] = true;
-                    });
-
-                    updateData(index);
-                  }
-
-                  return value;
-                });
-              } else {
-                showSnackbar(MessageType.warning,
-                    context: context,
-                    message: "Please do your skincare step by step");
-              }
-              _image = null;
-            }
-          : () {},
+      onTap: () {
+        showLoader
+            ? showSnackbar(MessageType.warning,
+                context: context,
+                message: "Please wait data uploading to firebase..")
+            : completeSkincareStep(index);
+      },
       child: Container(
         color: Colors.transparent,
         child: Padding(
@@ -120,7 +131,7 @@ class _RoutineScreenState extends State<RoutineScreen> {
                   ),
                   Container(
                     constraints: BoxConstraints(
-                        maxWidth: MediaQuery.sizeOf(context).width / 1.8),
+                        maxWidth: MediaQuery.sizeOf(context).width / 1.85),
                     child: Text(
                       "${data['detail']}",
                       style: UrbanCultureTextStyle.subheadW400(
@@ -153,207 +164,244 @@ class _RoutineScreenState extends State<RoutineScreen> {
     );
   }
 
-  Future getFirebaseData() async {
-    return await FirebaseFirestore.instance
-        .collection('user')
-        .doc("${userData?.uid}")
-        .collection('skincareRoutines')
-        .doc("${getCurrentDate()}")
-        .get();
+  getUserId() async {
+    userData = await FirebaseAuth.instance.currentUser;
   }
 
-  setFirebaseData({data, isupdate = false}) {
-    isupdate
-        ? FirebaseFirestore.instance
-            .collection('user')
-            .doc("${userData?.uid}")
-            .collection('skincareRoutines')
-            .doc("${getCurrentDate()}")
-            .update(data)
-        : FirebaseFirestore.instance
-            .collection('user')
-            .doc("${userData?.uid}")
-            .collection('skincareRoutines')
-            .doc("${getCurrentDate()}")
-            .set(data);
-  }
+  // Function to get current step
+  Future<void> getCurrentStepIndex() async {
+    String userId = userData.uid;
+    DocumentReference userDocRef =
+        FirebaseFirestore.instance.collection('users').doc(userId);
 
-  updateData(index) async {
-    switch (index) {
-      case 0:
-        getFirebaseData().then((value) {
-          setFirebaseData(
-            data: skincareRoutineResponseModelToJson(
-              ModelSkinCareRoutines(
-                completedSteps: CompletedSteps(
-                  moisturizer: false,
-                  sunscreen: false,
-                  toner: false,
-                  cleanser: true,
-                  lipBalm: false,
-                ),
-                images: Images(
-                  cleanser: '',
-                  lipBalm: '',
-                  moisturizer: '',
-                  sunscreen: '',
-                  toner: '',
-                ),
-                timestamps: Timestamps(
-                  cleanser: Timestamp.fromDate(DateTime.now()),
-                ),
-              ),
-            ),
-          );
-        });
-
-        break;
-      case 1:
-        getFirebaseData().then((snapshot) {
-          var data = snapshot.data();
-          print(data);
-          if (data != null) {
-            modelSkinCareRoutines = ModelSkinCareRoutines.fromJson(data);
-          }
-          setFirebaseData(
-            isupdate: true,
-            data: skincareRoutineResponseModelToJson(
-              ModelSkinCareRoutines(
-                completedSteps: CompletedSteps(
-                  moisturizer: false,
-                  sunscreen: false,
-                  toner: true,
-                  cleanser: modelSkinCareRoutines.completedSteps?.cleanser,
-                  lipBalm: false,
-                ),
-                images: Images(
-                  cleanser: '',
-                  lipBalm: '',
-                  moisturizer: '',
-                  sunscreen: '',
-                  toner: '',
-                ),
-                timestamps: Timestamps(
-                  cleanser: modelSkinCareRoutines.timestamps?.cleanser,
-                  toner: Timestamp.fromDate(DateTime.now()),
-                ),
-              ),
-            ),
-          );
-        });
-        break;
-      case 2:
-        getFirebaseData().then((snapshot) {
-          var data = snapshot.data();
-          print(data);
-          if (data != null) {
-            modelSkinCareRoutines = ModelSkinCareRoutines.fromJson(data);
-          }
-          setFirebaseData(
-            isupdate: true,
-            data: skincareRoutineResponseModelToJson(
-              ModelSkinCareRoutines(
-                completedSteps: CompletedSteps(
-                  moisturizer: true,
-                  sunscreen: false,
-                  toner: modelSkinCareRoutines.completedSteps?.toner,
-                  cleanser: modelSkinCareRoutines.completedSteps?.cleanser,
-                  lipBalm: false,
-                ),
-                images: Images(
-                  cleanser: '',
-                  lipBalm: '',
-                  moisturizer: '',
-                  sunscreen: '',
-                  toner: '',
-                ),
-                timestamps: Timestamps(
-                  moisturizer: Timestamp.fromDate(DateTime.now()),
-                  cleanser: modelSkinCareRoutines.timestamps?.cleanser,
-                  toner: modelSkinCareRoutines.timestamps?.toner,
-                ),
-              ),
-            ),
-          );
-        });
-        break;
-      case 3:
-        getFirebaseData().then((snapshot) {
-          var data = snapshot.data();
-          print(data);
-          if (data != null) {
-            modelSkinCareRoutines = ModelSkinCareRoutines.fromJson(data);
-          }
-          setFirebaseData(
-            isupdate: true,
-            data: skincareRoutineResponseModelToJson(
-              ModelSkinCareRoutines(
-                completedSteps: CompletedSteps(
-                  moisturizer:
-                      modelSkinCareRoutines.completedSteps?.moisturizer,
-                  sunscreen: true,
-                  toner: modelSkinCareRoutines.completedSteps?.toner,
-                  cleanser: modelSkinCareRoutines.completedSteps?.cleanser,
-                  lipBalm: false,
-                ),
-                images: Images(
-                  cleanser: '',
-                  lipBalm: '',
-                  moisturizer: '',
-                  sunscreen: '',
-                  toner: '',
-                ),
-                timestamps: Timestamps(
-                  moisturizer: modelSkinCareRoutines.timestamps?.moisturizer,
-                  sunscreen: Timestamp.fromDate(DateTime.now()),
-                  cleanser: modelSkinCareRoutines.timestamps?.cleanser,
-                  toner: modelSkinCareRoutines.timestamps?.toner,
-                ),
-              ),
-            ),
-          );
-        });
-        break;
-      case 4:
-        getFirebaseData().then((snapshot) {
-          var data = snapshot.data();
-          print(data);
-          if (data != null) {
-            modelSkinCareRoutines = ModelSkinCareRoutines.fromJson(data);
-          }
-          setFirebaseData(
-            isupdate: true,
-            data: skincareRoutineResponseModelToJson(
-              ModelSkinCareRoutines(
-                completedSteps: CompletedSteps(
-                  moisturizer:
-                      modelSkinCareRoutines.completedSteps?.moisturizer,
-                  sunscreen: modelSkinCareRoutines.completedSteps?.sunscreen,
-                  toner: modelSkinCareRoutines.completedSteps?.toner,
-                  cleanser: modelSkinCareRoutines.completedSteps?.cleanser,
-                  lipBalm: true,
-                ),
-                images: Images(
-                  cleanser: '',
-                  lipBalm: '',
-                  moisturizer: '',
-                  sunscreen: '',
-                  toner: '',
-                ),
-                timestamps: Timestamps(
-                  moisturizer: modelSkinCareRoutines.timestamps?.moisturizer,
-                  sunscreen: modelSkinCareRoutines.timestamps?.sunscreen,
-                  cleanser: modelSkinCareRoutines.timestamps?.cleanser,
-                  toner: modelSkinCareRoutines.timestamps?.toner,
-                  lipBalm: Timestamp.fromDate(DateTime.now()),
-                ),
-              ),
-            ),
-          );
-        });
-        break;
-      default:
+    DocumentSnapshot userSnapshot = await userDocRef.get();
+    Map<String, dynamic>? data = userSnapshot.data() as Map<String, dynamic>?;
+    if (userSnapshot.exists &&
+        data != null &&
+        data.containsKey('currentStepIndex')) {
+      setState(() {
+        currentStepIndex = data['currentStepIndex'] ??
+            0; // Provide a default value in case it's null
+      });
+    } else {
+      // Handle the case where 'currentStepIndex' does not exist, e.g., new user
+      setState(() {
+        currentStepIndex = 0;
+      });
     }
+  }
+
+  // Function to fetch skincare Routine data
+  Future<void> fetchSkincareRoutineData() async {
+    String userId = userData.uid;
+    String date = DateTime.now().toIso8601String().split('T')[0];
+    DocumentReference routineDocRef = FirebaseFirestore.instance
+        .collection('users')
+        .doc(userId)
+        .collection('skincareRoutines')
+        .doc(date);
+
+    DocumentSnapshot routineSnapshot = await routineDocRef.get();
+    if (routineSnapshot.exists) {
+      Map<String, dynamic> data =
+          routineSnapshot.data() as Map<String, dynamic>;
+      Map<String, dynamic> completedSteps = data['completedSteps'] ?? {};
+      Map<String, dynamic> timestamps = data['timestamps'] ?? {};
+
+      setState(() {
+        for (int i = 0; i < dailySkincareStep.length; i++) {
+          String step = dailySkincareStep[i]['step'];
+          dailySkincareStep[i]['isSelected'] = completedSteps[step] ?? false;
+          stepCompletionStatus[i] = completedSteps[step] ?? false;
+          Timestamp? timestamp = timestamps[step];
+          if (timestamp != null) {
+            DateTime dateTime = timestamp.toDate();
+
+            String formattedTime = DateFormat('HH:mm a').format(dateTime);
+            dailySkincareStep[i]['time'] = formattedTime;
+          } else {
+            dailySkincareStep[i]['time'] = 'Pending';
+          }
+        }
+      });
+    } else {
+      // Handle the case where there's no routine data for the current date
+      // Perhaps reset the dailySkincareStep list to its default state
+    }
+  }
+
+// Function to check and reset the step
+  Future<void> checkAndResetStepsIfNeeded() async {
+    String userId = userData!.uid;
+    DocumentReference userDocRef =
+        FirebaseFirestore.instance.collection('users').doc(userId);
+
+    DocumentSnapshot userSnapshot = await userDocRef.get();
+    if (userSnapshot.exists) {
+      Map<String, dynamic> data =
+          userSnapshot.data() as Map<String, dynamic>? ?? {};
+      String lastCompletedDate = data['lastCompletedDate'] ?? '';
+      String currentDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
+
+      if (lastCompletedDate != currentDate) {
+        // It's a new day; reset steps and update the Firestore accordingly
+        await updateCurrentStepIndex(
+            userId, 0); // Reset the step index for the next day
+        resetSteps(); // This function should also reset the UI elements
+
+        // Optionally, update 'lastCompletedDate' in Firestore to the current date
+        userDocRef.update({'lastCompletedDate': currentDate});
+      }
+    }
+  }
+
+// Function to update current step
+  Future<void> updateCurrentStepIndex(String userId, int index) async {
+    DocumentReference userDocRef =
+        FirebaseFirestore.instance.collection('users').doc(userId);
+
+    // Attempt to fetch the document first to check if it exists
+    DocumentSnapshot snapshot = await userDocRef.get();
+
+    if (!snapshot.exists) {
+      // If the document does not exist, use `set()` to create it and initialize fields
+      await userDocRef.set({
+        'currentStepIndex': index,
+      });
+    } else {
+      // If the document exists, proceed to update it
+      await userDocRef.update({'currentStepIndex': index});
+    }
+
+    getCurrentStepIndex();
+  }
+
+  // Function to reset steps for the next day
+  void resetSteps() {
+    for (var step in dailySkincareStep) {
+      step['isSelected'] = false;
+    }
+    stepCompletionStatus = List.filled(dailySkincareStep.length, false);
+  }
+
+  // Function to complete skincare step
+  Future<void> completeSkincareStep(int index) async {
+    // Check if the step is not already completed and is the next step in sequence
+    if (index < currentStepIndex) {
+      showSnackbar(MessageType.warning,
+          context: context,
+          message: "This step is already been performed earliar");
+      return;
+    } else if (index > currentStepIndex) {
+      showSnackbar(MessageType.warning,
+          context: context, message: "Please follow steps");
+      return;
+    }
+
+    File? imageFile = await getImage();
+    if (imageFile == null) {
+      // showAlert("No image selected.");
+      return;
+    }
+    setState(() {
+      showLoader = true;
+    });
+    String imageUrl = await uploadImageToFirebase(
+        imageFile, userData.uid, dailySkincareStep[index]['step']);
+    Timestamp timestamp = Timestamp.fromDate(DateTime.now());
+
+    await updateSkincareRoutine(
+        userData.uid, dailySkincareStep[index]['step'], imageUrl, timestamp);
+
+    // If it's the last step, reset currentStepIndex and possibly update streak
+    if (index == dailySkincareStep.length - 1) {
+      // await updateCurrentStepIndex(
+      //     userData.uid, 0); // Reset the step index for the next day
+      await updateCurrentStepIndex(userData.uid, index + 1);
+      updateStreak(userData.uid);
+      fetchSkincareRoutineData();
+      // Reset local step completion status
+      // setState(() {
+      // stepCompletionStatus = List.filled(dailySkincareStep.length, false);
+      // for (var step in dailySkincareStep) {
+      //   step['isSelected'] = false;
+      // }
+      // });
+    } else {
+      // Not the last step, increment currentStepIndex
+      await updateCurrentStepIndex(userData.uid, index + 1);
+      fetchSkincareRoutineData();
+    }
+
+    setState(() {
+      showLoader = false;
+    });
+
+    // Update local state to mark step as complete and move to next step
+    setState(() {
+      stepCompletionStatus[index] = true;
+      dailySkincareStep[index]['isSelected'] = true;
+      currentStepIndex = index + 1;
+    });
+  }
+
+  Future<String> uploadImageToFirebase(
+      File imageFile, String userId, String step) async {
+    String fileName =
+        'skincareRoutines/$userId/${DateTime.now().toIso8601String()}_$step';
+    Reference ref = FirebaseStorage.instance.ref().child(fileName);
+    UploadTask uploadTask = ref.putFile(File(imageFile.path));
+    TaskSnapshot taskSnapshot = await uploadTask;
+    return await taskSnapshot.ref.getDownloadURL();
+  }
+
+  Future<void> updateSkincareRoutine(
+      String userId, String step, String imageUrl, Timestamp timestamp) async {
+    DocumentReference userDocRef =
+        FirebaseFirestore.instance.collection('users').doc(userId);
+    String date = DateTime.now().toIso8601String().split('T')[0];
+    DocumentReference routineDocRef =
+        userDocRef.collection('skincareRoutines').doc(date);
+
+    return FirebaseFirestore.instance.runTransaction((transaction) async {
+      DocumentSnapshot routineSnapshot = await transaction.get(routineDocRef);
+
+      if (!routineSnapshot.exists) {
+        transaction.set(routineDocRef, {
+          'date': date,
+          'completedSteps': {step: true},
+          'timestamps': {step: timestamp},
+          'images': {step: imageUrl},
+        });
+      } else {
+        transaction.update(routineDocRef, {
+          'completedSteps.$step': true,
+          'timestamps.$step': timestamp,
+          'images.$step': imageUrl,
+        });
+      }
+    });
+  }
+
+  Future<void> updateStreak(String userId) async {
+    DocumentReference userDocRef =
+        FirebaseFirestore.instance.collection('users').doc(userId);
+    FirebaseFirestore.instance.runTransaction((transaction) async {
+      DocumentSnapshot userSnapshot = await transaction.get(userDocRef);
+      if (!userSnapshot.exists) return;
+
+      Map<String, dynamic> userData =
+          userSnapshot.data() as Map<String, dynamic>? ?? {};
+      int currentStreak = userData['currentStreak'] ?? 0;
+
+      // Check if all steps are completed for the current day before incrementing the streak
+      if (stepCompletionStatus.every((completed) => completed)) {
+        transaction.update(userDocRef, {
+          'currentStreak': currentStreak + 1,
+          'lastCompletedDate': DateFormat('yyyy-MM-dd').format(DateTime.now()),
+        });
+      }
+    });
   }
 }
 

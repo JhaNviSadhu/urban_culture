@@ -5,6 +5,7 @@ import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:urban_culture/utils/urban_culture_colors.dart';
+import 'package:urban_culture/utils/urban_culture_textstyles.dart';
 
 extension EmptySizedBox on num {
   SizedBox get height => SizedBox(height: toDouble());
@@ -72,6 +73,8 @@ showSnackbar(MessageType type, {message, context}) {
     content: Text(
       message,
       maxLines: 3,
+      style: UrbanCultureTextStyle.subheadW400(
+          color: UrbanCultureColors.urbanCulturTextColors.textTitleColor),
     ),
     backgroundColor: getColor(type),
     behavior: SnackBarBehavior.floating,
